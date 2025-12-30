@@ -1,4 +1,4 @@
-name: iOS Build CI/CD (PROVEN)
+name: iOS Build CI/CD (Dynamic Simulator)
 on:
   push:
     branches: [ main ]
@@ -13,22 +13,31 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: List Available Simulators
-      run: xcrun simctl list devices available
+      run: |
+        echo "=== ALL AVAILABLE SIMULATORS ==="
+        xcrun simctl list devices available
     
-    - name: Build for iPhone 15 Pro (WORKS)
+    - name: Select FIRST Available iPhone
+      id: sim
+      run: |
+        SIM_ID=$(xcrun simctl list devices available | grep -o "iPhone[^)]*[(][^)]*[)]" | head -1 | awk -F '[()]' '{print $2}' | tr -d ' ')
+        echo "sim_id=$SIM_ID" >> $GITHUB_OUTPUT
+        echo "Using simulator ID: $SIM_ID"
+    
+    - name: Build for Available iPhone
       run: |
         xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
           -scheme InvoiceRiskDetector \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=18.2'
-          -derivedDataPath DerivedData \
-          CONFIGURATION_BUILD_DIR=DerivedData/Build/Products/Debug-iphonesimulator
+          -destination "id=${{ steps.sim.outputs.sim_id }}" \
+          -derivedDataPath DerivedData
     
-    - name: Verify Build
-      run: ls -la DerivedData/Build/Products/Debug-iphonesimulator/
+    - name: Verify Build Products
+      run: ls -la DerivedData/Build/Products/
     
-    - name: Upload Success Artifacts
+    - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
+      if: always()
       with:
-        name: ios-build-success
-        path: DerivedData/Build/
+        name: ios-app-build
+        path: DerivedData/Build/Products/
