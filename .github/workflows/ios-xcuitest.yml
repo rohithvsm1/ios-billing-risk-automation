@@ -1,4 +1,4 @@
-name: iOS Build CI/CD (Target Direct)
+name: iOS Build CI/CD (SIMPLEST)
 on:
   push:
     branches: [ main ]
@@ -12,27 +12,28 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: List Xcode Projects
-      run: find . -name "*.xcodeproj" -o -name "*.xcworkspace"
-    
-    - name: Build Main Target (No Scheme)
+    - name: Build iOS App (No derivedDataPath)
       run: |
         xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
-          -target InvoiceRiskDetector \
           -sdk iphonesimulator \
           -configuration Debug \
-          -derivedDataPath DerivedData
+          -arch arm64
     
-    - name: Verify Build Products
+    - name: Find Built App
       run: |
-        echo "=== BUILT APPS ==="
-        find DerivedData -name "*.app" -o -name "*.ipa"
-        ls -la DerivedData/Build/Products/
+        echo "=== SEARCHING FOR .app FILES ==="
+        find . -name "*.app" -type d | head -5
     
-    - name: Upload iOS App
+    - name: List Build Products
+      run: |
+        ls -la **/Debug-iphonesimulator/ 2>/dev/null || echo "No Debug folder"
+    
+    - name: Upload Any Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ios-simulator-app
-        path: DerivedData/Build/
+        name: ios-build-output
+        path: |
+          **/*.app
+          **/Debug-iphonesimulator/
