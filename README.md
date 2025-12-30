@@ -29,9 +29,13 @@ xcodebuild test
 ## 🔥 **TECHNICAL FEATURES**
 
 ✅ Accessibility IDs → 100% flake-proof locators
+
 ✅ Parallel execution (TestNG integration)
+
 ✅ Backend API validation (JSON Schema)
+
 ✅ Screenshot diffing + video recording
+
 ✅ Live: https://github.com/rohithvsm1/ios-billing-risk-automation/actions
 
 
