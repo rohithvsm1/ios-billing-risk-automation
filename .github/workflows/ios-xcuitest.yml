@@ -1,4 +1,4 @@
-name: iOS Build CI/CD (Dynamic Simulator)
+name: iOS Build CI/CD (Create Simulator)
 on:
   push:
     branches: [ main ]
@@ -12,32 +12,36 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: List Available Simulators
-      run: |
-        echo "=== ALL AVAILABLE SIMULATORS ==="
-        xcrun simctl list devices available
+    - name: List Initial Simulators
+      run: xcrun simctl list devices available
     
-    - name: Select FIRST Available iPhone
-      id: sim
+    - name: Create iPhone 15 Simulator
       run: |
-        SIM_ID=$(xcrun simctl list devices available | grep -o "iPhone[^)]*[(][^)]*[)]" | head -1 | awk -F '[()]' '{print $2}' | tr -d ' ')
-        echo "sim_id=$SIM_ID" >> $GITHUB_OUTPUT
-        echo "Using simulator ID: $SIM_ID"
+        xcrun simctl create "iPhone 15" "com.apple.CoreSimulator.SimRuntime.iOS-18-2"
+        xcrun simctl boot "iPhone 15"
+        sleep 30  # Wait for boot
     
-    - name: Build for Available iPhone
+    - name: List Created Simulators
       run: |
+        echo "=== NEW SIMULATORS ==="
+        xcrun simctl list devices booted
+    
+    - name: Build for Created iPhone 15
+      run: |
+        SIM_ID=$(xcrun simctl list | grep "iPhone 15.*(18.2)" | awk -F '[()]' '{print $2}' | head -1 | tr -d ' ')
+        echo "Building for simulator: $SIM_ID"
         xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
           -scheme InvoiceRiskDetector \
-          -destination "id=${{ steps.sim.outputs.sim_id }}" \
+          -destination "id=$SIM_ID" \
           -derivedDataPath DerivedData
     
-    - name: Verify Build Products
+    - name: Verify Build
       run: ls -la DerivedData/Build/Products/
     
-    - name: Upload Build Artifact
+    - name: Upload Success
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ios-app-build
-        path: DerivedData/Build/Products/
+        name: ios-iphone15-build
+        path: DerivedData/Build/
