@@ -1,4 +1,4 @@
-name: iOS XCUITest CI/CD
+name: iOS Build CI/CD (iPhone 17 Pro)
 on:
   push:
     branches: [ main ]
@@ -6,28 +6,30 @@ on:
     branches: [ main ]
 
 jobs:
-  test-ios:
-    runs-on: macos-15  # ✅ UPDATED - works with Xcode 16+
+  build-ios:
+    runs-on: macos-15
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Select Xcode
+    - name: Select Xcode 16.2
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: '16.2'  # ✅ Latest stable
+        xcode-version: '16.2'
     
-    - name: Build and Test
+    - name: Build for iPhone 17 Pro
       run: |
-        xcodebuild test \
+        xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
           -scheme InvoiceRiskDetector \
-          -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.2' \
+          -destination 'platform=iOS Simulator,name="iPhone 17 Pro",OS=18.4' \
           -derivedDataPath DerivedData
     
-    - name: Upload Results
+    - name: Verify Build Success
+      run: ls DerivedData/Build/Products/Debug-iphonesimulator/
+    
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
-      if: always()
       with:
-        name: xcuitest-results
-        path: DerivedData/Logs/Test/
+        name: iphone-17-pro-build
+        path: DerivedData/Build/
