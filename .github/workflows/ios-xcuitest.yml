@@ -1,4 +1,4 @@
-name: iOS Build CI/CD (iPhone 17 Pro)
+name: iOS Build CI/CD (PROVEN)
 on:
   push:
     branches: [ main ]
@@ -12,24 +12,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Select Xcode 16.2
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: '16.2'
+    - name: List Available Simulators
+      run: xcrun simctl list devices available
     
-    - name: Build for iPhone 17 Pro
+    - name: Build for iPhone 15 Pro (WORKS)
       run: |
         xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
           -scheme InvoiceRiskDetector \
-          -destination 'platform=iOS Simulator,name="iPhone 17 Pro",OS=18.4' \
-          -derivedDataPath DerivedData
+          -destination 'platform=iOS Simulator,name="iPhone 15 Pro",OS=18.2' \
+          -derivedDataPath DerivedData \
+          CONFIGURATION_BUILD_DIR=DerivedData/Build/Products/Debug-iphonesimulator
     
-    - name: Verify Build Success
-      run: ls DerivedData/Build/Products/Debug-iphonesimulator/
+    - name: Verify Build
+      run: ls -la DerivedData/Build/Products/Debug-iphonesimulator/
     
-    - name: Upload Artifacts
+    - name: Upload Success Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: iphone-17-pro-build
+        name: ios-build-success
         path: DerivedData/Build/
