@@ -1,4 +1,4 @@
-name: iOS Build CI/CD (Full Setup)
+name: iOS Build CI/CD (Target Direct)
 on:
   push:
     branches: [ main ]
@@ -12,35 +12,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Xcode 16.2
-      run: |
-        sudo xcode-select --switch /Applications/Xcode_16.2.app/Contents/Developer
+    - name: List Xcode Projects
+      run: find . -name "*.xcodeproj" -o -name "*.xcworkspace"
     
-    - name: Install iOS Simulator Runtime
+    - name: Build Main Target (No Scheme)
       run: |
-        xcodebuild -downloadPlatform iOS
-    
-    - name: Create iPhone 15 Simulator
-      run: |
-        xcrun simctl create "iPhone 15" "com.apple.CoreSimulator.SimRuntime.iOS-18-2"
-        xcrun simctl boot "iPhone 15"
-        sleep 30
-    
-    - name: List Simulators
-      run: xcrun simctl list devices booted
-    
-    - name: Build App
-      run: |
-        SIM_ID=$(xcrun simctl list | grep "iPhone 15" | awk -F '[()]' '{print $2}' | head -1 | tr -d ' ')
         xcodebuild build \
           -project InvoiceRiskDetector.xcodeproj \
-          -scheme InvoiceRiskDetector \
-          -destination "id=$SIM_ID" \
+          -target InvoiceRiskDetector \
+          -sdk iphonesimulator \
+          -configuration Debug \
           -derivedDataPath DerivedData
     
-    - name: Upload Build
+    - name: Verify Build Products
+      run: |
+        echo "=== BUILT APPS ==="
+        find DerivedData -name "*.app" -o -name "*.ipa"
+        ls -la DerivedData/Build/Products/
+    
+    - name: Upload iOS App
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ios-complete-build
+        name: ios-simulator-app
         path: DerivedData/Build/
